@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+<html>
+    <header>Lab 2: JQuery</header>
+    <body>
+        <script>document.body.className += ' fade-out';</script>
+        <form>
+            Enter A Utah City: <input type="text" id="cityField" value=""><br>
+            Suggestion: <span id="txtHint">Empty</span>
+            <input id="weatherButton" type="submit" value="Submit">
+        </form>
+        City <br/><br/>
+        <textarea id="displayCity">No City</textarea>
+        Current Weather <br/>
+        <div id="weather">No weather</div>
+
+        <script>
+            /* global $ */
+            $(document).ready(function() { //all jQuery goes in here
+                
+                // Weather button on click
+                $("#weatherButton").click(function(e){
+                    var value = $("#cityField").val();
+                    var everything;
+                    everything = "<ul>";
+                    var weatherUrl = "https://api.darksky.net/forecast/4618583ceb739adb58441e1ea13b93b1/";
+                    console.log(value);
+                    $("#displayCity").text(value);
+                    e.preventDefault();
+                    var myurl = "https://api.openweathermap.org/data/2.5/weather?q=";
+                    myurl += value;
+                    myurl += "&APPID=dc0cd594376255d132e802ee0df9a790";
+                    console.log(myurl);
+                    $.ajax({
+                        url: myurl,
+                        datatype: "json",
+                        success: function(parsed_json) {
+                            console.log(parsed_json);
+                            var lat = parsed_json['coord']['lat'];
+                            var long = parsed_json['coord']['lon'];
+                            console.log(lat);
+                            console.log(long);
+                            weatherUrl += lat;
+                            weatherUrl += "," 
+                            weatherUrl += long;
+                            console.log(weatherUrl);
+                            ajaxcall2();
+                            $("#weather").html(everything).fadeIn();
+                        }
+                    });
+                    
+                    //HOW TO DO A SECOND AJAX CALL AFTER FORWARD GEOCODING?????
+                    function ajaxcall2() {
+                      $.ajax({
+                        url: weatherUrl,
+                        datatype: "json",
+                        success: function(parsed_json) {
+                          var feelsLike = parsed_json['currently']['apparentTemperature'];
+                          var temp = parsed_json['currently']['temperature'];
+                          everything += "<ul>";
+                          everything += "<li>Temperature: " + temp + " F";
+                          everything += "<li>Feels Like: " + feelsLike + " F";
+                          everything += "</ul>";
+                        }
+                      })
+                    }
+                }); //End Weatherbutton.clicks
+
+                // City Field
+                // Automatically populates on keystrokes
+                $("#cityField").keyup(function() {
+                    var url = "http://bioresearch.byu.edu/cs260/jquery/getcity.cgi?q="+$("#cityField").val();
+                    $.getJSON(url,function(data) {
+                        var everything;
+                        everything = "<ul>";
+                        $.each(data, function(i,item) {
+                            everything += "<li> "+data[i].city;
+                        });
+                        everything += "</ul>";
+                        $("#txtHint").html(everything);
+                    })
+                        .done(function() { console.log('getJSON request succeeded!'); })
+                        .fail(function(jqXHR, textStatus, errorThrown) { 
+                        console.log('getJSON request failed! ' + textStatus); 
+                        console.log("incoming "+jqXHR.responseText);
+                    }) // End of $.fail
+                        .always(function() { console.log('getJSON request ended!');
+                    }); // End of $.always
+                }); // End of cityField keyup function
+                $(function() {
+                    $('body').removeClass('fade-out');
+                });
+            }); // End of $.docReady
+        </script>
+    </body>
+
+</html>
